@@ -21,6 +21,7 @@ using System.IO;
 using Newtonsoft.Json;
 using System.Threading.Channels;
 using DSharpPlus.Extensions;
+using System.Collections.Concurrent;
 
 namespace Schala
 {
@@ -113,26 +114,91 @@ namespace Schala
             LoadWeightedLists();
         }
 
+        // Momentary connection drops make a client appear to leave and immediately rejoin the
+        // same voice channel. Delay "left" announcements by this long so a quick reconnect to
+        // the same channel can cancel it out instead of spamming the log with blips.
+        private static readonly TimeSpan VoiceLeaveDebounce = TimeSpan.FromSeconds(10);
+        private readonly ConcurrentDictionary<ulong, (ulong ChannelId, CancellationTokenSource Cts)> PendingVoiceLeaves = new();
+
         public async Task VoiceStateUpdated(VoiceStateUpdatedEventArgs args)
         {
-            if (args.GuildId == ZealGuildID && UserUpdateChannel is not null)
+            if (args.GuildId != ZealGuildID || UserUpdateChannel is null)
+                return;
+
+            ulong? beforeChannelId = args.Before?.ChannelId;
+            ulong? afterChannelId = args.After?.ChannelId;
+
+            if (beforeChannelId == afterChannelId)
+                return;
+
+            // Reconnecting to the same channel we appeared to just leave is a connection blip, not a real event.
+            if (afterChannelId != null
+                && PendingVoiceLeaves.TryGetValue(args.UserId, out var pending)
+                && pending.ChannelId == afterChannelId)
             {
-                if (args?.Before?.ChannelId != null)
-                {
-                    var channel = await args.Before.GetChannelAsync();
-
-                    if (channel is not null)
-                        await UserUpdateChannel.SendMessageAsync($"<@{args.UserId}> left voice channel {channel.Name}");
-                }
-
-                if (args?.After?.ChannelId != null)
-                {
-                    var channel = await args.After.GetChannelAsync();
-                    if (channel is not null)
-                        await UserUpdateChannel.SendMessageAsync($"<@{args.UserId}> joined voice channel {channel.Name}");
-                }
-
+                PendingVoiceLeaves.TryRemove(args.UserId, out _);
+                pending.Cts.Cancel();
+                pending.Cts.Dispose();
+                return;
             }
+
+            if (afterChannelId != null)
+            {
+                var channel = await args.After.GetChannelAsync();
+                if (channel is not null)
+                {
+                    var name = await GetVoiceEventDisplayNameAsync(args);
+                    await UserUpdateChannel.SendMessageAsync($"{name} joined voice channel {channel.Name}");
+                }
+            }
+
+            if (beforeChannelId != null && afterChannelId == null)
+            {
+                var channel = await args.Before.GetChannelAsync();
+                if (channel is not null)
+                {
+                    var name = await GetVoiceEventDisplayNameAsync(args);
+                    var cts = new CancellationTokenSource();
+                    PendingVoiceLeaves[args.UserId] = (beforeChannelId.Value, cts);
+                    _ = AnnounceVoiceLeaveAfterDelay(args.UserId, name, channel.Name, cts);
+                }
+            }
+            else if (beforeChannelId != null && afterChannelId != null)
+            {
+                // A genuine move between channels, not a disconnect - announce immediately.
+                var channel = await args.Before.GetChannelAsync();
+                if (channel is not null)
+                {
+                    var name = await GetVoiceEventDisplayNameAsync(args);
+                    await UserUpdateChannel.SendMessageAsync($"{name} left voice channel {channel.Name}");
+                }
+            }
+        }
+
+        private async Task AnnounceVoiceLeaveAfterDelay(ulong userId, string displayName, string channelName, CancellationTokenSource cts)
+        {
+            try
+            {
+                await Task.Delay(VoiceLeaveDebounce, cts.Token);
+            }
+            catch (TaskCanceledException)
+            {
+                return;
+            }
+            finally
+            {
+                PendingVoiceLeaves.TryRemove(userId, out _);
+                cts.Dispose();
+            }
+
+            if (UserUpdateChannel is not null)
+                await UserUpdateChannel.SendMessageAsync($"{displayName} left voice channel {channelName}");
+        }
+
+        private static async Task<string> GetVoiceEventDisplayNameAsync(VoiceStateUpdatedEventArgs args)
+        {
+            var user = await args.GetUserAsync();
+            return (user as DiscordMember)?.DisplayName ?? user?.Username ?? args.UserId.ToString();
         }
 
         public void StartLogin()
