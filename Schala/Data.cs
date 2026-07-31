@@ -50,8 +50,9 @@ namespace Schala
                 T? thisObject = JsonConvert.DeserializeObject<T>(File.ReadAllText(Location));
                 return thisObject;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Serilog.Log.Logger.Error(ex, $"Failed to deserialize {typeof(T).Name} from {Location}");
                 return default;
             }
 

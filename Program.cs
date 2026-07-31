@@ -69,6 +69,33 @@ namespace Schala
 
             Serilog.Log.Logger.Information($"Parsed name=\"{name}\"; found matching token in {tokenFileLocation}? {knownTokens.ContainsKey(name)}");
 
+            while (string.IsNullOrEmpty(token))
+            {
+                Serilog.Log.Logger.Warning($"No token resolved for name=\"{name}\". Not connecting to Discord; waiting for changes to {tokenFileLocation} before retrying.");
+
+                DateTime lastWriteTime = File.Exists(tokenFileLocation) ? File.GetLastWriteTimeUtc(tokenFileLocation) : DateTime.MinValue;
+                while (true)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(30));
+
+                    string currentLocation = tokenFileLocations.FirstOrDefault(File.Exists) ?? tokenFileLocation;
+                    DateTime currentWriteTime = File.Exists(currentLocation) ? File.GetLastWriteTimeUtc(currentLocation) : DateTime.MinValue;
+
+                    if (currentLocation != tokenFileLocation || currentWriteTime != lastWriteTime)
+                    {
+                        tokenFileLocation = currentLocation;
+                        break;
+                    }
+                }
+
+                Serilog.Log.Logger.Information($"Detected change to {tokenFileLocation}; re-reading token information.");
+                ReadBotTokenFile(tokenFileLocation);
+                if (knownTokens.TryGetValue(name, out string? updatedToken))
+                    token = updatedToken;
+
+                Serilog.Log.Logger.Information($"Parsed name=\"{name}\"; found matching token in {tokenFileLocation}? {knownTokens.ContainsKey(name)}");
+            }
+
             IHost host = Host.CreateDefaultBuilder(args)
                 .UseSystemd()
                 .ConfigureAppConfiguration((hostingContext, config) =>
