@@ -35,7 +35,8 @@ namespace Schala
                 .CreateLogger();
 
             //Find our token.
-            string tokenFileLocation = "./KnownServices.json";
+            string[] tokenFileLocations = ["./KnownServices.json", "/config/KnownServices.json"];
+            string tokenFileLocation = tokenFileLocations.FirstOrDefault(File.Exists) ?? tokenFileLocations[0];
             ReadBotTokenFile(tokenFileLocation);
 
             string token = string.Empty;
@@ -170,8 +171,8 @@ namespace Schala
 
             Serilog.Log.Logger.Information("Attempting to read token information from " + Path);
 
-            Serilog.Log.Logger.Information("Found KnownServices.json? " + File.Exists("./KnownServices.json"));
-            if (!File.Exists("./KnownServices.json"))
+            Serilog.Log.Logger.Information("Found KnownServices.json? " + File.Exists(Path));
+            if (!File.Exists(Path))
                 return;
 
             Dictionary<string, string>? tokens = Data.Load<Dictionary<string, string>>(Path, false);
