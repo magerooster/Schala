@@ -42,9 +42,14 @@ namespace Schala
 
             //Find our token.
             string[] tokenFileLocations = ["./KnownServices.json", "/app/config/KnownServices.json"];
+            string? tokenFileLocation = null;
             foreach (string candidate in tokenFileLocations)
-                Serilog.Log.Logger.Information($"Checking config path {candidate}: exists? {File.Exists(candidate)}");
-            string tokenFileLocation = tokenFileLocations.FirstOrDefault(File.Exists) ?? tokenFileLocations[0];
+            {
+                bool readable = TryProbeFile(candidate, out string status);
+                Serilog.Log.Logger.Information($"Checking config path {candidate}: {status}");
+                tokenFileLocation ??= readable ? candidate : null;
+            }
+            tokenFileLocation ??= tokenFileLocations[0];
             Serilog.Log.Logger.Information($"Using config file path: {tokenFileLocation}");
             ReadBotTokenFile(tokenFileLocation);
 
@@ -73,13 +78,13 @@ namespace Schala
             {
                 Serilog.Log.Logger.Warning($"No token resolved for name=\"{name}\". Not connecting to Discord; waiting for changes to {tokenFileLocation} before retrying.");
 
-                DateTime lastWriteTime = File.Exists(tokenFileLocation) ? File.GetLastWriteTimeUtc(tokenFileLocation) : DateTime.MinValue;
+                DateTime lastWriteTime = GetSafeWriteTime(tokenFileLocation);
                 while (true)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(30));
 
-                    string currentLocation = tokenFileLocations.FirstOrDefault(File.Exists) ?? tokenFileLocation;
-                    DateTime currentWriteTime = File.Exists(currentLocation) ? File.GetLastWriteTimeUtc(currentLocation) : DateTime.MinValue;
+                    string currentLocation = tokenFileLocations.FirstOrDefault(p => TryProbeFile(p, out _)) ?? tokenFileLocation;
+                    DateTime currentWriteTime = GetSafeWriteTime(currentLocation);
 
                     if (currentLocation != tokenFileLocation || currentWriteTime != lastWriteTime)
                     {
@@ -209,8 +214,9 @@ namespace Schala
 
             Serilog.Log.Logger.Information("Attempting to read token information from " + Path);
 
-            Serilog.Log.Logger.Information("Found KnownServices.json? " + File.Exists(Path));
-            if (!File.Exists(Path))
+            bool readable = TryProbeFile(Path, out string status);
+            Serilog.Log.Logger.Information($"Config file status for {Path}: {status}");
+            if (!readable)
                 return;
 
             Dictionary<string, string>? tokens = Data.Load<Dictionary<string, string>>(Path, false);
@@ -224,6 +230,48 @@ namespace Schala
             {
                 Serilog.Log.Logger.Information($"Read {tokens.Count} tokens from file.");
                 knownTokens = tokens;
+            }
+        }
+
+        // Distinguishes "file doesn't exist" from "exists but can't be opened" (permissions,
+        // locked, etc.) - File.Exists() silently swallows access errors and just returns false,
+        // which hides permission problems on mounted volumes.
+        private static bool TryProbeFile(string path, out string status)
+        {
+            try
+            {
+                using FileStream stream = File.OpenRead(path);
+                status = "ok";
+                return true;
+            }
+            catch (FileNotFoundException)
+            {
+                status = "not found";
+            }
+            catch (DirectoryNotFoundException)
+            {
+                status = "not found (containing directory missing)";
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                status = $"permission denied ({ex.Message})";
+            }
+            catch (IOException ex)
+            {
+                status = $"IO error ({ex.Message})";
+            }
+            return false;
+        }
+
+        private static DateTime GetSafeWriteTime(string path)
+        {
+            try
+            {
+                return File.GetLastWriteTimeUtc(path);
+            }
+            catch
+            {
+                return DateTime.MinValue;
             }
         }
     }
