@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Schala": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
