@@ -38,9 +38,12 @@ namespace Schala
             string gitSha = Environment.GetEnvironmentVariable("GIT_SHA") ?? "unknown";
             Serilog.Log.Logger.Information($"Schala build {buildNumber} ({gitSha})");
 
+            Serilog.Log.Logger.Information($"Command-line args: [{string.Join(", ", args)}]");
+
             //Find our token.
             string[] tokenFileLocations = ["./KnownServices.json", "/config/KnownServices.json"];
             string tokenFileLocation = tokenFileLocations.FirstOrDefault(File.Exists) ?? tokenFileLocations[0];
+            Serilog.Log.Logger.Information($"Using config file path: {tokenFileLocation}");
             ReadBotTokenFile(tokenFileLocation);
 
             string token = string.Empty;
@@ -61,6 +64,8 @@ namespace Schala
                         token = knownTokens[name];
                 }
             }
+
+            Serilog.Log.Logger.Information($"Parsed name=\"{name}\"; found matching token in {tokenFileLocation}? {knownTokens.ContainsKey(name)}");
 
             IHost host = Host.CreateDefaultBuilder(args)
                 .UseSystemd()
