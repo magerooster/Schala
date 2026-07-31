@@ -41,7 +41,7 @@ namespace Schala
             Serilog.Log.Logger.Information($"Command-line args: [{string.Join(", ", args)}]");
 
             //Find our token.
-            string[] tokenFileLocations = ["./KnownServices.json", "/config/KnownServices.json"];
+            string[] tokenFileLocations = ["./KnownServices.json", "/app/config/KnownServices.json"];
             foreach (string candidate in tokenFileLocations)
                 Serilog.Log.Logger.Information($"Checking config path {candidate}: exists? {File.Exists(candidate)}");
             string tokenFileLocation = tokenFileLocations.FirstOrDefault(File.Exists) ?? tokenFileLocations[0];
