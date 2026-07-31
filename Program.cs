@@ -42,6 +42,8 @@ namespace Schala
 
             //Find our token.
             string[] tokenFileLocations = ["./KnownServices.json", "/config/KnownServices.json"];
+            foreach (string candidate in tokenFileLocations)
+                Serilog.Log.Logger.Information($"Checking config path {candidate}: exists? {File.Exists(candidate)}");
             string tokenFileLocation = tokenFileLocations.FirstOrDefault(File.Exists) ?? tokenFileLocations[0];
             Serilog.Log.Logger.Information($"Using config file path: {tokenFileLocation}");
             ReadBotTokenFile(tokenFileLocation);
