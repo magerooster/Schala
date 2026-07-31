@@ -25,4 +25,4 @@ RUN dotnet publish "./Schala.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Schala.dll"]
+ENTRYPOINT ["sh", "-c", "cp /app/config/KnownServices.json /app/KnownServices.json && dotnet Schala.dll \"$@\"", "--"]
