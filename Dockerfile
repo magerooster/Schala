@@ -10,10 +10,10 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["Schala for Linux/Schala.csproj", "Schala for Linux/"]
-RUN dotnet restore "./Schala for Linux/Schala.csproj"
+COPY ["Schala.csproj", "./"]
+RUN dotnet restore "./Schala.csproj"
 COPY . .
-WORKDIR "/src/Schala for Linux"
+WORKDIR "/src"
 RUN dotnet build "./Schala.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
