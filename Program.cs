@@ -34,6 +34,10 @@ namespace Schala
                 .Subscribe())
                 .CreateLogger();
 
+            string buildNumber = Environment.GetEnvironmentVariable("BUILD_NUMBER") ?? "unknown";
+            string gitSha = Environment.GetEnvironmentVariable("GIT_SHA") ?? "unknown";
+            Serilog.Log.Logger.Information($"Schala build {buildNumber} ({gitSha})");
+
             //Find our token.
             string[] tokenFileLocations = ["./KnownServices.json", "/config/KnownServices.json"];
             string tokenFileLocation = tokenFileLocations.FirstOrDefault(File.Exists) ?? tokenFileLocations[0];

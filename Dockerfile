@@ -23,6 +23,10 @@ RUN dotnet publish "./Schala.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
+ARG BUILD_NUMBER=0
+ARG GIT_SHA=unknown
+ENV BUILD_NUMBER=$BUILD_NUMBER
+ENV GIT_SHA=$GIT_SHA
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Schala.dll"]
