@@ -2,25 +2,9 @@
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
-using DSharpPlus.Commands;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Serilog;
-using Serilog.Events;
-using Swordfish.NET.Collections;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reactive.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using System.IO;
-using Newtonsoft.Json;
-using System.Threading.Channels;
-using DSharpPlus.Extensions;
 using System.Collections.Concurrent;
 
 namespace Schala
@@ -32,10 +16,10 @@ namespace Schala
         // Set as the first statement of the constructor; there's only ever one instance,
         // created once at startup before any command handling can run.
         public static SchalaClient Current { get; private set; } = null!;
-        public DiscordClient Client { get; private set; }
+        public DiscordClient Client { get; }
         //public DiscordSlashClient SlashClient { get; private set; }
         //private CommandService _commands = new CommandService();
-        private IServiceCollection _map = new ServiceCollection();
+        private readonly IServiceCollection _map = new ServiceCollection();
         //private IServiceProvider _services;
 
         public string activeBotName = "";
@@ -61,8 +45,8 @@ namespace Schala
 
         #endregion
         #region Reactions
-        public Dictionary<ulong, Dictionary<string, string>> GuildEmojiLookup = new Dictionary<ulong, Dictionary<string, string>>(); //This is a list for our own internal commands.
-        private List<ulong> ScrapedEmojis = new List<ulong>(); //This is a list for the scraper.
+        public Dictionary<ulong, Dictionary<string, string>> GuildEmojiLookup = []; //This is a list for our own internal commands.
+        private readonly List<ulong> ScrapedEmojis = []; //This is a list for the scraper.
 
         public const ulong OldZealGuildID = 163384044149538816; //Kingdom of Zeal
         public const ulong OldEmojiChannelID = 691448909889011833; //Kingdom of Zeal Emoji Channel
@@ -85,7 +69,7 @@ namespace Schala
         #endregion
         #region Persistent Data
         #endregion
-        public List<IWeightedList> WeightedLists = new List<IWeightedList>();
+        public List<IWeightedList> WeightedLists = [];
         #endregion
         #region Properties
         private string _ConnectionStatus = string.Empty;
@@ -238,9 +222,9 @@ namespace Schala
             }
         }
 
-        public async Task GuildAvailable(GuildAvailableEventArgs e)
+        public Task GuildAvailable(GuildAvailableEventArgs e)
         {
-            await Task.Run(async () =>
+            return Task.Run(async () =>
             {
                 Log(LogEventType.System, "Connecting to " + e.Guild.Name);
                 LoadEmojis(e.Guild);
@@ -355,7 +339,7 @@ namespace Schala
 
         public async Task ClientMessageReceived(MessageCreatedEventArgs e)
         {
-            MessageState state = new MessageState(e);
+            MessageState state = new (e);
 
             if (state.Channel == "emojis")
                 return;

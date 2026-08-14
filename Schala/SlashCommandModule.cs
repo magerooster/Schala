@@ -19,7 +19,7 @@ namespace Schala
         [Command("hello")]
         public async Task HelloWorldCommandAsync(CommandContext ctx)
         {
-            CommandState state = new CommandState(ctx);
+            CommandState state = new(ctx);
             if (ctx.User.Id == 899508644868128789)
             {
                 await state.StartResponseAsync(true);
@@ -32,7 +32,7 @@ namespace Schala
         [Command("roll")]
         public async Task SolveCommand(CommandContext ctx, string Phrase)
         {
-            ParserState state = new ParserState(ctx, Phrase);
+            ParserState state = new(ctx, Phrase);
             await state.State.StartResponseAsync(false);
 
             string result = state.Parse();
@@ -50,7 +50,6 @@ namespace Schala
             {
                 await slashState.RespondEphemeralAsync(result);
             }
-            
         }
 
 
@@ -450,7 +449,7 @@ namespace Schala
                     "Anamnesis Anyder",
                 };
 
-                string dunevent = events[rng.Next() % events.Count()];
+                string dunevent = events[rng.Next() % events.Count];
                 string dungeon = dungeons[rng.Next() % dungeons.Count()];
 
                 await state.FinishResponseAsync(state.UsernameForHeader + $", **Your queue for {dungeon} popped! However {dunevent}.**");

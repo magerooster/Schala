@@ -13,10 +13,10 @@ using System.Reactive.Linq;
 
 namespace Schala
 {
-    public class Program
+    public static class Program
     {
-        public static ConcurrentObservableCollection<LogEvent> MainLog { get; private set; } = [];
-        private static Dictionary<string, string> knownTokens = new Dictionary<string, string>();
+        public static ConcurrentObservableCollection<LogEvent> MainLog { get; } = [];
+        private static Dictionary<string, string> knownTokens = [];
 
 
         public static async Task Main(string[] args)
@@ -27,10 +27,7 @@ namespace Schala
             //Create our logger.
             Serilog.Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console()
-                .WriteTo.Observers(events => events.Do(evt =>
-                {
-                    MainLog.Add(evt);
-                })
+                .WriteTo.Observers(events => events.Do(evt => MainLog.Add(evt))
                 .Subscribe())
                 .CreateLogger();
 
@@ -57,16 +54,16 @@ namespace Schala
             string name = string.Empty;
             foreach (var rawArg in args)
             {
-                var arg = rawArg.StartsWith("--", StringComparison.Ordinal) ? rawArg.Substring(2) : rawArg;
+                var arg = rawArg.StartsWith("--", StringComparison.Ordinal) ? rawArg[2..] : rawArg;
 
                 if (arg.StartsWith("token=", StringComparison.OrdinalIgnoreCase))
                 {
-                    token = arg.Substring("token=".Length);
+                    token = arg["token=".Length..];
                     break;
                 }
                 if (arg.StartsWith("name=", StringComparison.OrdinalIgnoreCase))
                 {
-                    name = arg.Substring("name=".Length);
+                    name = arg["name=".Length..];
                     if (knownTokens.ContainsKey(name))
                         token = knownTokens[name];
                 }
@@ -224,7 +221,7 @@ namespace Schala
             if (tokens == null)
             {
                 Serilog.Log.Logger.Error("Could not read token information.");
-                knownTokens = new Dictionary<string, string>();
+                knownTokens = [];
             }
             else
             {

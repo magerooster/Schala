@@ -1,1 +1,7 @@
-{}
+{
+  // Default is "Document" (open file only), which hides suggestions in every other file
+  // until you open it. Roslynator ships bundled with csharp-dev-tools and is on by default
+  // (roslynatorEnabled/*AnalyzersEnabled/etc.) - this just makes its ~180 rules, plus the
+  // built-in IDE0xxx style rules from .editorconfig, visible across the whole project.
+  "csharp-dev-tools.roslyn.analyzerDiagnosticsScope": "Project"
+}
