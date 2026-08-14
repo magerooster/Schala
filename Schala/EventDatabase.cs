@@ -19,13 +19,13 @@ namespace Schala
     public class SchalaEvent
     {
         public int EventID { get; set; }
-        public string Owner { get; set; }
-        public string EventType { get; set; }
+        public required string Owner { get; set; }
+        public required string EventType { get; set; }
         public DateTime Time { get; set; }
-        public string Channel { get; set; }
-        public string RolePings { get; set; }
-        public string Keywords { get; set; }
-        public string Description { get; set; }
+        public required string Channel { get; set; }
+        public required string RolePings { get; set; }
+        public required string Keywords { get; set; }
+        public required string Description { get; set; }
     }
 
     public static class SqliteHelper

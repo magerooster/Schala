@@ -18,6 +18,7 @@
  */
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Rei.Random
 {
@@ -330,6 +331,7 @@ namespace Rei.Random
         /// ƒWƒFƒlƒŒ[ƒ^[‚ð‰Šú‰»‚µ‚Ü‚·B
         /// </summary>
         /// <param name="seed"></param>
+        [MemberNotNull(nameof(sfmt))]
         protected void init_gen_rand(int seed)
         {
             int i;

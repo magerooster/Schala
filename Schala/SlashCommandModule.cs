@@ -476,7 +476,7 @@ namespace Schala
                 Order ScoreOrder = Order.Any)
             {
                 CommandState State = new CommandState(Context);
-                State.StartResponseAsync(false);
+                await State.StartResponseAsync(false);
 
                 Dictionary<string, long> stats = new Dictionary<string, long>();
 

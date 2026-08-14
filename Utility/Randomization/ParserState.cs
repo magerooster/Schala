@@ -24,6 +24,7 @@ namespace Schala
         public ParserState(CommandContext Context, IReadOnlyDictionary<Regex, Solver.RegexEvaluator>? CustomLogic = null, int Seed = 0) : this(CustomLogic, Seed)
         {
             State = new CommandState(Context);
+            Message = string.Empty;
         }
 
         public ParserState(CommandContext Context, string Message, IReadOnlyDictionary<Regex, Solver.RegexEvaluator>? CustomLogic = null, int Seed = 0) : this(CustomLogic, Seed)
@@ -31,7 +32,7 @@ namespace Schala
             this.Message = Message;
             State = new CommandState(Context);
         }
-    
+
         private ParserState(IReadOnlyDictionary<Regex, Solver.RegexEvaluator>? CustomLogic = null, int Seed = 0)
         {
             this.CustomLogic = CustomLogic ?? Solver.ParsingOrder;
@@ -41,6 +42,10 @@ namespace Schala
             }
             this.Randomizer = new SFMT(Seed);
             this.Seed = Seed;
+            // State and Message are always set immediately by whichever public constructor
+            // chains into this one; this constructor is never used on its own.
+            State = null!;
+            Message = null!;
         }
         #endregion
         #region Utility

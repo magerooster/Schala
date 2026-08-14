@@ -29,7 +29,9 @@ namespace Schala
     {
         #region Internal Data
         #region Session
-        public static SchalaClient Current { get; private set; }
+        // Set as the first statement of the constructor; there's only ever one instance,
+        // created once at startup before any command handling can run.
+        public static SchalaClient Current { get; private set; } = null!;
         public DiscordClient Client { get; private set; }
         //public DiscordSlashClient SlashClient { get; private set; }
         //private CommandService _commands = new CommandService();
@@ -86,7 +88,7 @@ namespace Schala
         public List<IWeightedList> WeightedLists = new List<IWeightedList>();
         #endregion
         #region Properties
-        private string _ConnectionStatus;
+        private string _ConnectionStatus = string.Empty;
         public string ConnectionStatus
         {
             get { return GetField(ref _ConnectionStatus); }
@@ -125,8 +127,10 @@ namespace Schala
             if (args.GuildId != ZealGuildID || UserUpdateChannel is null)
                 return;
 
-            ulong? beforeChannelId = args.Before?.ChannelId;
-            ulong? afterChannelId = args.After?.ChannelId;
+            var before = args.Before;
+            var after = args.After;
+            ulong? beforeChannelId = before?.ChannelId;
+            ulong? afterChannelId = after?.ChannelId;
 
             if (beforeChannelId == afterChannelId)
                 return;
@@ -142,9 +146,9 @@ namespace Schala
                 return;
             }
 
-            if (afterChannelId != null)
+            if (afterChannelId != null && after is not null)
             {
-                var channel = await args.After.GetChannelAsync();
+                var channel = await after.GetChannelAsync();
                 if (channel is not null)
                 {
                     var name = await GetVoiceEventDisplayNameAsync(args);
@@ -152,9 +156,9 @@ namespace Schala
                 }
             }
 
-            if (beforeChannelId != null && afterChannelId == null)
+            if (beforeChannelId != null && afterChannelId == null && before is not null)
             {
-                var channel = await args.Before.GetChannelAsync();
+                var channel = await before.GetChannelAsync();
                 if (channel is not null)
                 {
                     var name = await GetVoiceEventDisplayNameAsync(args);
@@ -163,10 +167,10 @@ namespace Schala
                     _ = AnnounceVoiceLeaveAfterDelay(args.UserId, name, channel.Name, cts);
                 }
             }
-            else if (beforeChannelId != null && afterChannelId != null)
+            else if (beforeChannelId != null && afterChannelId != null && before is not null)
             {
                 // A genuine move between channels, not a disconnect - announce immediately.
-                var channel = await args.Before.GetChannelAsync();
+                var channel = await before.GetChannelAsync();
                 if (channel is not null)
                 {
                     var name = await GetVoiceEventDisplayNameAsync(args);
