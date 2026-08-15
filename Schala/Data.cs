@@ -1,10 +1,11 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using Newtonsoft.Json;
 
 namespace Schala;
 
@@ -25,10 +26,10 @@ public static class Data
         Global = Load<GlobalMetadata>(GlobalFileLocation, true) ?? new GlobalMetadata();
 
         Console.WriteLine("Loading server variables...");
-        Server = Load<Dictionary<ulong, ServerMetadata>>(ServerFolderLocation, true) ?? new Dictionary<ulong, ServerMetadata>();
+        Server = Load<Dictionary<ulong, ServerMetadata>>(ServerFolderLocation, true) ?? [];
 
         Console.WriteLine("Loading user variables...");
-        User = Load<Dictionary<ulong, UserMetadata>>(UserFileLocation, true) ?? new Dictionary<ulong, UserMetadata>();
+        User = Load<Dictionary<ulong, UserMetadata>>(UserFileLocation, true) ?? [];
     }
     public static T? Load<T>(string Location, bool CreateIfMissing)
     {
@@ -75,7 +76,6 @@ public static class Data
 
         }
 
-        
     }
 }
 
@@ -97,5 +97,5 @@ public class ChannelMetadata
 
 public class UserMetadata
 {
-    public Dictionary<string, string> Variables { get; set; } = new Dictionary<string, string>(); //Collection of key/value pairs that only work for a particular user.
+    public Dictionary<string, string> Variables { get; set; } = []; //Collection of key/value pairs that only work for a particular user.
 }

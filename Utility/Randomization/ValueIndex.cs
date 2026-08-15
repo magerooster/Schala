@@ -1,27 +1,15 @@
 ﻿using System;
 
-namespace Schala
+namespace Schala;
+
+public class ValueIndex<TValue,TIndex>(TValue Value, TIndex Index) : IComparable<ValueIndex<TValue,TIndex>> where TValue : IComparable<TValue>
 {
-    public class ValueIndex<TValue,TIndex> : IComparable<ValueIndex<TValue,TIndex>> where TValue : IComparable<TValue>
+    public TValue Value = Value;
+    public TIndex Index = Index;
+
+    public int CompareTo(ValueIndex<TValue, TIndex>? other)
     {
-        public TValue Value;
-        public TIndex Index;
-
-        public int CompareTo(ValueIndex<TValue, TIndex>? other)
-        {
-            if (other == null)
-            {
-                return 1;
-            }
-
-            return Value.CompareTo(other.Value);
-        }
-
-        public ValueIndex(TValue Value, TIndex Index)
-        {
-            this.Value = Value;
-            this.Index = Index;
-        }
+        return other == null ? 1 : Value.CompareTo(other.Value);
     }
 }
 #region Ignoring for now

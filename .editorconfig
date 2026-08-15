@@ -26,6 +26,20 @@ indent_size = 2
 # C# files
 [*.cs]
 
+# Rules disabled as not useful for this codebase's style:
+# RCS1102: Make class static - flags pure DSharpPlus command-group container classes.
+dotnet_diagnostic.RCS1102.severity = none
+# IDE0130: Namespace does not match folder structure - namespaces here (Schala, Rei.Random)
+# intentionally don't track the folder layout.
+dotnet_diagnostic.IDE0130.severity = none
+# IDE0060/RCS1163: Unused parameter - a lot of parameters here exist only to match a
+# delegate/event/[Command] method signature and can't be dropped just because unused.
+dotnet_diagnostic.IDE0060.severity = none
+dotnet_diagnostic.RCS1163.severity = none
+# RCS1093: File contains no code - files can intentionally be all commented-out code kept
+# for later use.
+dotnet_diagnostic.RCS1093.severity = none
+
 #### Core EditorConfig Options ####
 
 # Indentation and spacing
@@ -66,7 +80,10 @@ dotnet_style_require_accessibility_modifiers = for_non_interface_members:silent
 dotnet_style_coalesce_expression = true:suggestion
 dotnet_style_collection_initializer = true:suggestion
 dotnet_style_explicit_tuple_names = true:suggestion
-dotnet_style_namespace_match_folder = true:suggestion
+# Off: this codebase's namespaces (Schala, Rei.Random) intentionally don't track the folder
+# layout (Utility/, Utility/Randomization/, etc.), and this rule's autofix has also been seen
+# to crash `dotnet format` on this project.
+dotnet_style_namespace_match_folder = true:none
 dotnet_style_null_propagation = true:suggestion
 dotnet_style_object_initializer = true:suggestion
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
@@ -75,8 +92,9 @@ dotnet_style_prefer_auto_properties = true:suggestion
 # same kinds of members, so this is worth flagging loudly rather than just suggesting.
 dotnet_style_prefer_collection_expression = when_types_loosely_match:warning
 dotnet_style_prefer_compound_assignment = true:suggestion
-dotnet_style_prefer_conditional_expression_over_assignment = true:suggestion
-dotnet_style_prefer_conditional_expression_over_return = true:suggestion
+# Off: converting if/else to a ternary reads worse to a human than the plain if statement.
+dotnet_style_prefer_conditional_expression_over_assignment = false:silent
+dotnet_style_prefer_conditional_expression_over_return = false:silent
 dotnet_style_prefer_foreach_explicit_cast_in_source = when_strongly_typed:suggestion
 dotnet_style_prefer_inferred_anonymous_type_member_names = true:suggestion
 dotnet_style_prefer_inferred_tuple_names = true:suggestion
@@ -88,7 +106,10 @@ dotnet_style_prefer_simplified_interpolation = true:suggestion
 dotnet_style_readonly_field = true:warning
 
 # Parameter preferences
-dotnet_code_quality_unused_parameters = all:suggestion
+# Off: many "unused" parameters here exist to match a delegate/event/[Command] method
+# signature (DiscordClient event handlers, command overloads, etc.), so this flags a lot
+# of intentional code.
+dotnet_code_quality_unused_parameters = all:none
 
 # Suppression preferences
 dotnet_remove_unnecessary_suppression_exclusions = none
